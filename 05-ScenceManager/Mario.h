@@ -104,16 +104,16 @@
 #define CONST_SPEED 0.45f
 
 #define acc_const 0.004f
-#define dec_const 0.0089f
+#define dec_const 0.012f
 #define fric_const 0.004f
 #define MAX_SPEED_WALKING	0.15f
 #define MAX_SPEED_RUNNING	0.3f
 #define FLYING_SPEED	0.1f
-#define POWER_RUNNING 50
+#define POWER_RUNNING 55
 
 #define CONST_Y 122
 
-#define ATKTIMEEND	500
+#define ATKTACK_TIME	300
 
 class CMario : public CGameObject
 {
@@ -135,8 +135,8 @@ public:
 	bool falling = false;
 	bool firebullet = false;
 	int Power = 0;
-	float y_ground;
 	int check = 0;
+	int TimeToFly = 0;
 	int getBullet = 1;
 	vector<MarioFireBullet*> FireBullet;
 	CGame *game =  CGame::GetInstance();

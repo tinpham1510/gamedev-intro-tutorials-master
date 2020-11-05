@@ -6,23 +6,25 @@
 #include "Game.h"
 
 #include "Goomba.h"
+#include "Koopas.h"
 #include "Portal.h"
+#include "MarioFireBullet.h"
 #include "PlayScence.h"
 
 CMario::CMario(float x, float y) : CGameObject()
 {
-	level = MARIO_LEVEL_BIG;
+	level = MARIO_LEVEL_BIG_TAIL;
 	untouchable = 0;
 	SetState(MARIO_STATE_IDLE);
-
+	TimeToFly = 0;
 	start_x = x; 
 	start_y = y; 
 	this->x = x; 
 	this->y = y; 
 	OnGround = true;
 	running = flying = isMaxSpeed = Hitting = false;
-	MarioFireBullet* mfl = new MarioFireBullet(0, 0);
-	FireBullet.push_back(mfl);
+	//MarioFireBullet* mfl = new MarioFireBullet();
+	//FireBullet.push_back(mfl);
 }
 
 void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
@@ -30,7 +32,7 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	// Calculate dx, dy 
 	CGameObject::Update(dt);
 	// Simple fall down
-	if (flying)
+	if (flying == true)
 	{
 		vy += MARIO_GRAVITY_FLYING * dt;
 	}
@@ -50,14 +52,14 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	// turn off collision when die 
 	if (state!=MARIO_STATE_DIE)
 		CalcPotentialCollisions(coObjects, coEvents);
-	if ((!left || !right) && !running)
+	if (!running)
 	{
 		if (vx < -MAX_SPEED_WALKING || vx > MAX_SPEED_WALKING)
 		{
 			vx -=vx ; 
 		}
 	}
-	if (Hitting == true && GetTickCount64() - check >= ATKTIMEEND)
+	if (Hitting == true && GetTickCount64() - check >= ATKTACK_TIME)
 	{
 		Hitting = false;
 	}
@@ -83,6 +85,12 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				}
 			}
 		}
+	}
+	if (Power == POWER_RUNNING &&flying == true && GetTickCount64() - TimeToFly >= 250)
+	{
+		flying = false;
+		setVarFlying();
+		running = false;
 	}
 	// reset untouchable timer if untouchable time has passed
 	if (GetTickCount() - untouchable_start > MARIO_UNTOUCHABLE_TIME)
@@ -122,8 +130,6 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		for (UINT i = 0; i < coEventsResult.size(); i++)
 		{
 			LPCOLLISIONEVENT e = coEventsResult[i];
-			if (dynamic_cast<CBrick *>(e->obj)|| dynamic_cast<ColorBox *>(e->obj))
-			{
 				if (e->ny < 0)
 				{
 					OnGround = true;
@@ -131,7 +137,7 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 					flying = false;
 					DecreaseVaFlying();
 				}
-			}
+			
 			if (dynamic_cast<ColorBox*>(e->obj))
 			{
 				if (e->nx != 0)
@@ -158,17 +164,91 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 					{
 						if (goomba->GetState()!=GOOMBA_STATE_DIE)
 						{
-							if (level > MARIO_LEVEL_SMALL)
+							if (level == MARIO_LEVEL_BIG_TAIL)
+							{
+								level = MARIO_LEVEL_BIG;
+								StartUntouchable();
+							}
+							else if (level == MARIO_LEVEL_BIG)
 							{
 								level = MARIO_LEVEL_SMALL;
 								StartUntouchable();
+
 							}
-							else 
+							else
 								SetState(MARIO_STATE_DIE);
 						}
 					}
 				}
 			} // if Goomba
+
+			if (dynamic_cast<CKoopas*>(e->obj)) // if e->obj is Goomba 
+			{
+				CKoopas* koopas = dynamic_cast<CKoopas*>(e->obj);
+
+				// jump on top >> kill Koopas and deflect a bit 
+				if (e->ny < 0)
+				{
+					if (koopas->GetState() != KOOPAS_STATE_DIE)
+					{
+						koopas->SetState(KOOPAS_STATE_DIE);
+						vy = -MARIO_JUMP_DEFLECT_SPEED;
+						
+					}
+				}
+				else if (e->nx != 0)
+				{
+					if (untouchable == 0)
+					{
+						if (koopas->GetState() != KOOPAS_STATE_DIE)
+						{
+							if (level == MARIO_LEVEL_BIG_TAIL)
+							{
+								level = MARIO_LEVEL_BIG;
+								StartUntouchable();
+							}
+							else if (level == MARIO_LEVEL_BIG)
+							{
+								level = MARIO_LEVEL_SMALL;
+								StartUntouchable();
+
+							}
+							else
+								SetState(MARIO_STATE_DIE);
+						}
+						else
+						{
+							koopas->vx += KOOPAS_SHELL_SPEED_;
+						}
+					}
+				}
+			} // Koopas
+			if (dynamic_cast<FirePlant*>(e->obj)) // if e->obj fire bullet
+			{
+				FirePlant* fb = dynamic_cast<FirePlant*>(e->obj);
+				if (e->nx != 0)
+				{
+					if (untouchable == 0)
+					{
+						if (fb->GetState() == BULLET_ANI_RIGHT || fb->GetState()== BULLET_ANI_LEFT )
+						{
+							if (level == MARIO_LEVEL_BIG_TAIL)
+							{
+								level = MARIO_LEVEL_BIG;
+								StartUntouchable();
+							}
+							else if (level == MARIO_LEVEL_BIG)
+							{
+								level = MARIO_LEVEL_SMALL;
+								StartUntouchable();
+
+							}
+							else
+								SetState(MARIO_STATE_DIE);
+						}
+					}
+				}
+			} // Bullet
 			else if (dynamic_cast<CPortal *>(e->obj))
 			{
 				CPortal *p = dynamic_cast<CPortal *>(e->obj);
@@ -178,7 +258,13 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	}
 	// clean up collision events
 	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
-	DebugOut(L"vx: %f\n", vx);
+	DebugOut(L"power: %d\n", Power);
+	if (flying == true)
+	{
+		DebugOut(L"true\n");
+	}
+	else
+		DebugOut(L"False\n");
 }
 
 void CMario::Render()
@@ -259,6 +345,19 @@ void CMario::Render()
 						ani = MARIO_ANI_BIG_TAIL_FALL_FLYING_LEFT;
 					}
 
+				}
+				else if (flying == true)
+				{
+
+					if (nx > 0)
+					{
+						ani = MARIO_ANI_BIG_TAIL_FLYING_RIGHT;
+
+					}
+					else
+					{
+						ani = MARIO_ANI_BIG_TAIL_FLYING_LEFT;
+					}
 				}
 				else if (falling == true)
 				{
@@ -345,6 +444,18 @@ void CMario::Render()
 					else
 					{
 						ani = MARIO_ANI_BIG_TAIL_JUMP_LEFT;
+					}
+				}
+				else if (flying == true && vy < 0)
+				{
+					if (nx > 0)
+					{
+						ani = MARIO_ANI_BIG_TAIL_JUMP_FLYING_RIGHT;
+
+					}
+					else
+					{
+						ani = MARIO_ANI_BIG_TAIL_JUMP_FLYING_LEFT;
 					}
 				}
 				else if (vy > 0 && flying == true) // falling while flying
@@ -638,7 +749,6 @@ void CMario::SetState(int state)
 	case MARIO_STATE_WALKING_RIGHT:
 		isMaxSpeed = false;
 		Hitting = false;
-		flying = false;
 		checkSitting();
 		//press right
 		if (running == false)
@@ -671,7 +781,6 @@ void CMario::SetState(int state)
 	case MARIO_STATE_WALKING_LEFT:
 		isMaxSpeed = false;
 		Hitting = false;
-		flying = false;
 		checkSitting();
 		if (running == false)
 		{
@@ -712,10 +821,12 @@ void CMario::SetState(int state)
 		//
 	case MARIO_STATE_IDLE:
 		checkSitting();
-		setVarFlying();
+		if (flying == false && OnGround == true)
+		{
+			setVarFlying();
+		}
 		turnleft = false;
 		turnright = false;
-		flying = false;
 		//friction 
 		if (!left || !right)
 		{
@@ -752,7 +863,7 @@ void CMario::SetState(int state)
 				{
 					vx = -MARIO_RUNNING_SPEED;
 					isMaxSpeed = false;
-					if (flying == false)
+					if (flying == false && OnGround == true)
 					{
 						setVarFlying();
 					}
@@ -785,7 +896,7 @@ void CMario::SetState(int state)
 				{
 					vx = MARIO_RUNNING_SPEED;
 					isMaxSpeed = false;
-					if (flying == false)
+					if (flying == false && OnGround==true)
 					{
 						setVarFlying();
 					}
@@ -804,17 +915,15 @@ void CMario::SetState(int state)
 			nx = 1;
 		}
 		break;
-	//case MARIO_STATE_HITTING:
-	//	Hitting = true;
-	//	break;
 
 	case MARIO_STATE_FLYING:
-		falling = false;
+		TimeToFly = GetTickCount64();
 		if (level == MARIO_LEVEL_BIG_TAIL)
 		{
 			if (Power == POWER_RUNNING)
 			{
 				vy = -FLYING_SPEED;
+				flying = true;
 			}
 		}
 		break;
@@ -901,7 +1010,7 @@ void CMario::DecreaseVaFlying()
 {
 	if (Power > 0 )
 	{
-		Power--;
+		Power --;
 	}
 }
 void CMario::setVarFlying()

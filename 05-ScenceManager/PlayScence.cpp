@@ -33,8 +33,10 @@ CPlayScene::CPlayScene(int id, LPCWSTR filePath):
 #define OBJECT_TYPE_KOOPAS	3
 #define OBJECT_TYPE_COLORBOX	4
 #define OBJECT_TYPE_FIRE_BULLET	5
+#define OBJECT_TYPE_PIPE	6
+#define OBJECT_TYPE_PLANT	7
 
-#define OBJECT_TYPE_PORTAL	50
+#define OBJECT_TYPE_PORTAL	50	
 
 #define MAX_SCENE_LINE 1024
 #define HEIGHT_SCEEN_VALUE	30
@@ -155,6 +157,7 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		DebugOut(L"[INFO] Player object created!\n");
 		break;
 	case OBJECT_TYPE_GOOMBA: obj = new CGoomba(); break;
+	case OBJECT_TYPE_FIRE_BULLET: obj = new FirePlant(); break;
 	case OBJECT_TYPE_BRICK:
 		{
 			float width = atof(tokens[4].c_str());
@@ -169,6 +172,13 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 			obj = new ColorBox(x, y, width, height);
 		}
 		break;
+	case OBJECT_TYPE_PIPE:
+	{
+		float width = atof(tokens[4].c_str());
+		float height = atof(tokens[5].c_str());
+		obj = new Pipe(x, y, width, height);
+	}
+	break;
 	case OBJECT_TYPE_KOOPAS: obj = new CKoopas(); break;;
 	case OBJECT_TYPE_PORTAL:
 		{	
@@ -286,8 +296,8 @@ void CPlayScene::Update(DWORD dt)
 
 void CPlayScene::Render()
 {	
-	lm = new LoadMap();
-	lm->DrawMap();
+	//lm = new LoadMap();
+	//lm->DrawMap();
 	for (int i = 0; i < objects.size(); i++)
 		objects[i]->Render();
 
@@ -323,6 +333,7 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		{
 			mario->SetState(MARIO_STATE_FLYING);
 			mario->flying = true;
+			mario->falling = false;
 		}
 		break;
 	case DIK_A:
@@ -376,6 +387,7 @@ void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 			mario->running = false;
 		}
 		mario->falling = false;
+		mario->flying = false;
 		break;
 	case DIK_LEFT: 
 	{

@@ -10,6 +10,8 @@
 #include"LoadMap.h"
 #include"ColorBox.h"
 #include "MarioFireBullet.h"
+#include "FirePlant.h"
+#include "Pipe.h"
 #define SCREEN_WIDTH_SCENE	2450
 class CPlayScene: public CScene
 {
