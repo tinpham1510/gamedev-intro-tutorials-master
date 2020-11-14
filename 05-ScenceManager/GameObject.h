@@ -56,7 +56,8 @@ public:
 	int nx;	 
 
 	int state;
-
+	bool Collision = false;
+	bool isDie = false;
 	DWORD dt; 
 
 	LPANIMATION_SET animation_set;

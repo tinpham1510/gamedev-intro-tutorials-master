@@ -9,16 +9,19 @@
 #include "Koopas.h"
 #include"LoadMap.h"
 #include"ColorBox.h"
-#include "MarioFireBullet.h"
 #include "FirePlant.h"
 #include "Pipe.h"
+#include "Plant.h"
+#include "QuestionBrick.h"
+#include "MushRoom.h"
 #define SCREEN_WIDTH_SCENE	2450
 class CPlayScene: public CScene
 {
 protected: 
 	CMario *player;					// A play scene has to have player, right? 
-	LoadMap *lm;
+	LoadMap* lm ;
 	CBrick *brick;
+	
 	vector<LPGAMEOBJECT> objects;
 
 	void _ParseSection_TEXTURES(string line);
@@ -35,7 +38,6 @@ public:
 	virtual void Update(DWORD dt);
 	virtual void Render();
 	virtual void Unload();
-
 	CMario * GetPlayer() { return player; } 
 
 	//friend class CPlayScenceKeyHandler;

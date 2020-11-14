@@ -63,13 +63,16 @@
     <ClCompile Include="ColorBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MarioFireBullet.cpp">
+    <ClCompile Include="Pipe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QuestionBrick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FirePlant.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Pipe.cpp">
+    <ClCompile Include="MushRoom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,13 +125,16 @@
     <ClInclude Include="ColorBox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MarioFireBullet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FirePlant.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Pipe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuestionBrick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MushRoom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

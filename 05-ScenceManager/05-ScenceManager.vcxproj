@@ -130,9 +130,10 @@
     <ClCompile Include="FirePlant.cpp" />
     <ClCompile Include="Koopas.cpp" />
     <ClCompile Include="LoadMap.cpp" />
-    <ClCompile Include="MarioFireBullet.cpp" />
+    <ClCompile Include="MushRoom.cpp" />
     <ClCompile Include="Pipe.cpp" />
     <ClCompile Include="Portal.cpp" />
+    <ClCompile Include="QuestionBrick.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -151,9 +152,10 @@
     <ClInclude Include="FirePlant.h" />
     <ClInclude Include="Koopas.h" />
     <ClInclude Include="LoadMap.h" />
-    <ClInclude Include="MarioFireBullet.h" />
+    <ClInclude Include="MushRoom.h" />
     <ClInclude Include="Pipe.h" />
     <ClInclude Include="Portal.h" />
+    <ClInclude Include="QuestionBrick.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameObject.h" />

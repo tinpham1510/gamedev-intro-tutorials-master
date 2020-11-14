@@ -32,7 +32,7 @@ CPlayScene::CPlayScene(int id, LPCWSTR filePath):
 #define OBJECT_TYPE_GOOMBA	2
 #define OBJECT_TYPE_KOOPAS	3
 #define OBJECT_TYPE_COLORBOX	4
-#define OBJECT_TYPE_FIRE_BULLET	5
+#define OBJECT_TYPE_QUESTION_BRICK	5
 #define OBJECT_TYPE_PIPE	6
 #define OBJECT_TYPE_PLANT	7
 
@@ -157,7 +157,8 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		DebugOut(L"[INFO] Player object created!\n");
 		break;
 	case OBJECT_TYPE_GOOMBA: obj = new CGoomba(); break;
-	case OBJECT_TYPE_FIRE_BULLET: obj = new FirePlant(); break;
+	case OBJECT_TYPE_PLANT: obj = new Plant(); break;
+	case OBJECT_TYPE_QUESTION_BRICK: obj = new QuestionBrick(); break;
 	case OBJECT_TYPE_BRICK:
 		{
 			float width = atof(tokens[4].c_str());
@@ -248,6 +249,7 @@ void CPlayScene::Load()
 	CTextures::GetInstance()->Add(ID_TEX_BBOX, L"textures\\bbox.png", D3DCOLOR_XRGB(255, 255, 255));
 
 	DebugOut(L"[INFO] Done loading scene resources %s\n", sceneFilePath);
+	lm = new LoadMap();
 }
 
 void CPlayScene::Update(DWORD dt)
@@ -258,23 +260,57 @@ void CPlayScene::Update(DWORD dt)
 	vector<LPGAMEOBJECT> coObjects;
 	for (size_t i = 1; i < objects.size(); i++)
 	{
-		coObjects.push_back(objects[i]);
+		if(objects[i]->Collision==false)
+			coObjects.push_back(objects[i]);
 	}
 
 	for (size_t i = 0; i < objects.size(); i++)
 	{
 		objects[i]->Update(dt, &coObjects);
 	}
+	//
+	
+	if (player->Attack==true && player->level == MARIO_LEVEL_FIRE)
+	{	
+		if (player->getBullet<=2 && player->getBullet > 0)
+		{
+			CAnimationSets* animation_sets = CAnimationSets::GetInstance();
+			LPANIMATION_SET ani_set = animation_sets->Get(FIREPLANT_ANI_ID);
+			FirePlant* fp = new FirePlant(0, 0);
+			fp->SetSpeed(SPEED_BULLET * player->nx, 0);
+			fp->SetPosition(player->x + 5, player->y);
+			fp->FireBullet = true;
+			if (player->nx == 1)
+			{
+				fp->nx = 1;
+			}
+			else
+				fp->nx = -1;
+			fp->SetAnimationSet(ani_set);
+			objects.push_back(fp);
+			player->getBullet--;
+		}
+	}
+	if (player->Attack == true && GetTickCount64() - player->TimeAttack >= 100)
+	{
+		player->Attack = false;
+		if (player->getBullet == 0)
+		{
+			player->getBullet++;
+		}
+	}
+
 	// skip the rest if scene was already unloaded (Mario::Update might trigger PlayScene::Unload)
 	if (player == NULL) return; 
+	//
 
-	
 	// Update camera to follow mario
 	float cx, cy;
 	player->GetPosition(cx, cy);
 
 	CGame *game = CGame::GetInstance();
 	cx -= game->GetScreenWidth() / 2;
+	cy -= game->GetScreenHeight() / 2;
 	if (cx < 0)
 	{
 		cx = 0;
@@ -291,16 +327,19 @@ void CPlayScene::Update(DWORD dt)
 	{
 		cy = game->GetScreenHeight() + HEIGHT_SCEEN_VALUE;
 	}
+
 	CGame::GetInstance()->SetCamPos(cx, cy);
 }
 
 void CPlayScene::Render()
 {	
-	//lm = new LoadMap();
-	//lm->DrawMap();
+	lm->DrawMap();
 	for (int i = 0; i < objects.size(); i++)
-		objects[i]->Render();
-
+	{
+		if(objects[i]->Collision==false)
+			objects[i]->Render();
+	}
+		
 
 }
 
@@ -323,6 +362,8 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	DebugOut(L"[INFO] KeyDown: %d\n", KeyCode);
 
 	CMario *mario = ((CPlayScene*)scence)->GetPlayer();
+	CGoomba* goomba = new CGoomba();
+	CKoopas* Koopas = new CKoopas();
 	switch (KeyCode)
 	{
 	case DIK_SPACE:
@@ -365,6 +406,11 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		mario->Hitting = true;
 		mario->check = GetTickCount64();
 		break;
+	case DIK_D:
+		mario->Attack = true;
+		mario->TimeAttack = GetTickCount64();
+		mario->TimeReloadBullet = GetTickCount64();
+		break;
 	}
 }
 void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
@@ -388,6 +434,7 @@ void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 		}
 		mario->falling = false;
 		mario->flying = false;
+		mario->DecreaseVaFlying();
 		break;
 	case DIK_LEFT: 
 	{
@@ -411,6 +458,7 @@ void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 		}
 	}
 	break;
+
 	}
 }
 void CPlayScenceKeyHandler::KeyState(BYTE *states)
